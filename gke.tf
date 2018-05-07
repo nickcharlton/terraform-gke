@@ -5,15 +5,13 @@ provider "google" {
 }
 
 resource "google_container_cluster" "primary" {
-  name               = "gke-example"
-  zone               = "europe-west2-a"
+  name                     = "gke-example"
+  zone                     = "europe-west2-a"
+  remove_default_node_pool = true
 
-  /*
-  node_pool = [{
-    name       = "default-pool"
-    node_count = 0
-  }]
-  */
+  node_pool {
+    name = "default-pool"
+  }
 }
 
 resource "google_container_node_pool" "primary_pool" {
@@ -34,20 +32,5 @@ resource "google_container_node_pool" "primary_pool" {
   management {
     auto_repair  = true
     auto_upgrade = true
-  }
-
-  # Delete the default node pool before spinning this one up
-  depends_on = ["null_resource.default_cluster_deleter"]
-}
-
-resource "null_resource" "default_cluster_deleter" {
-  provisioner "local-exec" {
-    command = <<EOF
-    gcloud container node-pools \
-      --project terraform-gke \
-      --quiet \
-      delete default-pool \
-      --cluster ${google_container_cluster.primary.name}
-EOF
   }
 }
